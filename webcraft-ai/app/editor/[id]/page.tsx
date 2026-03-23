@@ -3,14 +3,76 @@
 import Canvas from '@/components/canvas/Canvas'
 import VoiceCommander from '@/components/voice/VoiceCommander'
 import Toolbar from '@/components/canvas/Toolbar'
+import PageSwitcher from '@/components/canvas/PageSwitcher'
 import ColourPalette from '@/components/ui/ColourPalette'
 import DeployModal from '@/components/ui/DeployModal'
 import ExportModal from '@/components/ui/ExportModal'
 import { RoomProvider, useMutation, useStorage } from '@/lib/liveblocks'
+import { Page } from '@/lib/liveblocks'
 import { ClientSideSuspense } from '@liveblocks/react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { TEMPLATE_PRESETS } from '@/lib/templates'
+
+// Convert the flat template components into a Pages array
+function templateToPages(templateId: string): Page[] {
+  const preset = TEMPLATE_PRESETS[templateId] || TEMPLATE_PRESETS['blank']
+  const homeId = Math.random().toString(36).substring(7)
+
+  // The template components all go into the "Home" page
+  const homePage: Page = {
+    id: homeId,
+    name: 'Home',
+    slug: 'home',
+    components: preset.components,
+  }
+
+  // If the template has pricing, add a pre-built Contact page too
+  const hasContact = preset.components.some((c: any) => c.type === 'contact')
+  if (hasContact) return [homePage]
+
+  // Otherwise give them a second starter page to show the feature
+  const contactId = Math.random().toString(36).substring(7)
+  const contactPage: Page = {
+    id: contactId,
+    name: 'Contact',
+    slug: 'contact',
+    components: [
+      {
+        id: `n${contactId}`,
+        type: 'navbar',
+        props: {
+          logo: 'My Brand',
+          links: [
+            { label: 'Home', href: '#home' },
+            { label: 'Contact', href: '#contact' },
+          ],
+          cta: 'Back to Home',
+          ctaHref: '#home',
+        },
+      },
+      {
+        id: `c${contactId}`,
+        type: 'contact',
+        props: { heading: 'Get In Touch', subtitle: 'Have questions? We\'d love to hear from you.' },
+      },
+      {
+        id: `f${contactId}`,
+        type: 'footer',
+        props: {
+          brand: 'My Brand',
+          copy: `© ${new Date().getFullYear()} My Brand.`,
+          footerLinks: [
+            { label: 'Home', href: '#home' },
+            { label: 'Contact', href: '#contact' },
+          ],
+        },
+      },
+    ],
+  }
+
+  return [homePage, contactPage]
+}
 
 function EditorContent() {
   const { id } = useParams()
@@ -20,28 +82,40 @@ function EditorContent() {
   const [showExport, setShowExport] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
-  const components = useStorage((root: any) => root.components)
+  const pages = useStorage((root: any) => root.pages) as Page[] | null
+  const activePage = useStorage((root: any) => root.activePage) as string | null
 
   const initTemplate = useMutation(({ storage }) => {
-    const existing = storage.get('components')
-    if (!existing || (existing as any[]).length === 0) {
-      const preset = TEMPLATE_PRESETS[templateId] || TEMPLATE_PRESETS['blank']
-      storage.set('components', preset.components)
+    const existingPages = storage.get('pages') as any
+    if (!existingPages || (existingPages as any[]).length === 0) {
+      const newPages = templateToPages(templateId)
+      storage.set('pages', newPages)
+      storage.set('activePage', newPages[0].id)
+    } else {
+      // Ensure activePage is set if missing
+      const active = storage.get('activePage')
+      if (!active && existingPages.length > 0) {
+        storage.set('activePage', existingPages[0].id)
+      }
     }
     setInitialized(true)
   }, [templateId])
 
   useEffect(() => {
-    if (!initialized && components !== null) {
+    if (!initialized && pages !== null) {
       initTemplate()
     }
-  }, [components, initialized, initTemplate])
+  }, [pages, initialized, initTemplate])
 
   const handleVoiceCommand = (command: any) => {
     console.log('Voice command received:', command)
   }
 
   const templateName = TEMPLATE_PRESETS[templateId]?.label || 'Editor'
+  const activeP = pages?.find((p: Page) => p.id === activePage)
+
+  // Gather all components from all pages for export
+  const allComponents = pages?.flatMap((p: Page) => p.components) ?? []
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-100 text-gray-900">
@@ -54,8 +128,17 @@ function EditorContent() {
             </a>
             <span className="text-gray-200">|</span>
             <span className="text-sm text-gray-500 font-medium">{templateName} Template</span>
+            {activeP && (
+              <>
+                <span className="text-gray-200">›</span>
+                <span className="text-sm font-semibold text-violet-600">{activeP.name}</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg font-medium">
+              {pages?.length ?? 0} page{(pages?.length ?? 0) !== 1 ? 's' : ''}
+            </span>
             <button
               onClick={() => window.open(`/preview/${id as string}`, '_blank')}
               className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
@@ -80,27 +163,40 @@ function EditorContent() {
 
       {/* Main area */}
       <div className="flex flex-1 overflow-hidden">
-        <Toolbar />
+        {/* Left panel: Pages + Components stacked */}
+        <div className="flex flex-col w-60 flex-shrink-0 bg-white border-r border-gray-200">
+          {/* Pages section (top ~40% of sidebar) */}
+          <div className="flex-shrink-0 border-b border-gray-100" style={{ minHeight: '200px', maxHeight: '280px' }}>
+            <PageSwitcher />
+          </div>
+          {/* Components section (rest of sidebar) */}
+          <div className="flex-1 min-h-0">
+            <Toolbar />
+          </div>
+        </div>
+
+        {/* Canvas area */}
         <main className="flex-1 relative overflow-y-auto bg-gray-100">
           {/* Hint bar */}
           <div className="sticky top-0 z-10 bg-amber-50 border-b border-amber-100 px-6 py-2 text-xs text-amber-700 font-medium flex items-center gap-2">
-            <span>💡 Tip:</span>
-            <span><strong>Click any text</strong> to edit it · <strong>Drag the ⠿ handle</strong> to reorder sections · <strong>✕</strong> to delete a section</span>
+            <span>💡</span>
+            <span><strong>Click text</strong> to edit · <strong>Drag ⠿</strong> to reorder · <strong>✕</strong> to delete · Use the <strong>Pages panel</strong> to switch pages</span>
           </div>
           {/* Canvas */}
           <div className="max-w-5xl mx-auto py-6 px-4">
             <Canvas />
           </div>
         </main>
+
         {/* Right sidebar */}
-        <div className="w-64 flex-shrink-0 bg-white border-l border-gray-200 overflow-y-auto">
+        <div className="w-56 flex-shrink-0 bg-white border-l border-gray-200 overflow-y-auto">
           <ColourPalette />
         </div>
       </div>
 
       <VoiceCommander onCommand={handleVoiceCommand} />
       {showDeploy && <DeployModal onClose={() => setShowDeploy(false)} />}
-      {showExport && <ExportModal components={components as any[]} theme="midnight" onClose={() => setShowExport(false)} />}
+      {showExport && <ExportModal components={allComponents} theme="midnight" onClose={() => setShowExport(false)} />}
     </div>
   )
 }
@@ -109,7 +205,10 @@ export default function EditorPage() {
   const { id } = useParams()
 
   return (
-    <RoomProvider id={id as string} initialStorage={{ components: [], colorPalette: 'midnight' }}>
+    <RoomProvider
+      id={id as string}
+      initialStorage={{ pages: [], activePage: '', colorPalette: 'midnight', components: [] }}
+    >
       <ClientSideSuspense fallback={
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
           <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />

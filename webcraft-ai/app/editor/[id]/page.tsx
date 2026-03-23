@@ -8,6 +8,7 @@ import ColourPalette from '@/components/ui/ColourPalette'
 import DeployModal from '@/components/ui/DeployModal'
 import ExportModal from '@/components/ui/ExportModal'
 import Collaborators from '@/components/ui/Collaborators'
+import LiveCursors from '@/components/ui/LiveCursors'
 import { RoomProvider, useMutation, useStorage } from '@/lib/liveblocks'
 import { Page } from '@/lib/liveblocks'
 import { ClientSideSuspense } from '@liveblocks/react'
@@ -80,6 +81,7 @@ function EditorContent() {
   const { id } = useParams()
   const searchParams = useSearchParams()
   const templateId = searchParams?.get('template') || 'blank'
+  const ownerUsername = searchParams?.get('owner') || ''
   const inviteMode = searchParams?.get('mode')
   const inviteToken = searchParams?.get('token')
   const [showDeploy, setShowDeploy] = useState(false)
@@ -171,7 +173,7 @@ function EditorContent() {
     }
   }, [id, inviteToken, inviteMode, isAuthLoading])
 
-  const createShareLink = async (access: 'edit' | 'view') => {
+  const createShareLink = async (access: 'edit' | 'view', presenter?: string) => {
     setShareStatus('Generating share link...')
     const res = await fetch('/api/rooms/share', {
       method: 'POST',
@@ -187,7 +189,11 @@ function EditorContent() {
 
     const data = await res.json()
     await navigator.clipboard.writeText(data.link)
-    setShareStatus(`${access === 'edit' ? 'Edit' : 'View'} link copied`) 
+    if (presenter) {
+      setShareStatus(`Presentation link copied. Send it to @${presenter}`)
+      return
+    }
+    setShareStatus(`${access === 'edit' ? 'Edit' : 'View'} link copied`)
   }
 
   const handleVoiceCommand = (command: any) => {
@@ -227,6 +233,9 @@ function EditorContent() {
             <a href="/" className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600">
               WebCraft AI
             </a>
+            <a href="/designs" className="text-xs font-bold px-2 py-1 rounded-md border border-violet-200 text-violet-600 bg-violet-50">
+              Designs
+            </a>
             <span className="text-gray-200">|</span>
             <span className="text-sm text-gray-500 font-medium">{templateName} Template</span>
             {activeP && (
@@ -259,6 +268,14 @@ function EditorContent() {
                 >
                   ✏️ Share Edit
                 </button>
+                {ownerUsername && (
+                  <button
+                    onClick={() => createShareLink('view', ownerUsername)}
+                    className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
+                  >
+                    📣 Present to @{ownerUsername}
+                  </button>
+                )}
               </>
             )}
             <button
@@ -321,6 +338,7 @@ function EditorContent() {
       </div>
 
       <VoiceCommander onCommand={handleVoiceCommand} />
+      <LiveCursors myName={authUser || 'Guest'} canShare={true} />
       {canEdit && showDeploy && <DeployModal onClose={() => setShowDeploy(false)} />}
       {showExport && <ExportModal components={allComponents} theme="midnight" onClose={() => setShowExport(false)} />}
     </div>

@@ -12,6 +12,13 @@ export type Page = {
   components: any[]
 }
 
+type Presence = {
+  cursor?: { x: number; y: number } | null
+  name?: string
+  cursorColor?: string
+  pointerEnabled?: boolean
+}
+
 type Storage = {
   pages: Page[]
   activePage: string  // id of the currently active page in the editor
@@ -26,4 +33,4 @@ export const {
   useMutation,
   useOthers,
   useMyPresence
-} = createRoomContext<{}, Storage>(client)
+} = createRoomContext<Presence, Storage>(client)

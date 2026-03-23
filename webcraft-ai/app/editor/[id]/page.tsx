@@ -77,11 +77,79 @@ function templateToPages(templateId: string): Page[] {
   return [homePage, contactPage]
 }
 
+function siteContentToPages(site: any): Page[] {
+  const pageId = Math.random().toString(36).substring(7)
+  const content = site?.content || {}
+
+  const components: any[] = [
+    {
+      id: `n${pageId}`,
+      type: 'navbar',
+      props: {
+        logo: site?.title || 'My Brand',
+        links: [
+          { label: 'Home', href: '#home' },
+          { label: 'About', href: '#about' },
+          { label: 'Contact', href: '#contact' },
+        ],
+        cta: 'Contact',
+        ctaHref: '#contact',
+      },
+    },
+    {
+      id: `h${pageId}`,
+      type: 'hero',
+      props: {
+        title: content?.hero?.heading || site?.title || 'Welcome',
+        subtitle: content?.hero?.subheading || site?.description || 'Upgraded with WebCraft AI',
+        cta: 'Get Started',
+        ctaHref: '#contact',
+      },
+    },
+  ]
+
+  if (content?.about?.heading || content?.about?.body) {
+    components.push({
+      id: `a${pageId}`,
+      type: 'about',
+      props: {
+        heading: content?.about?.heading || 'About',
+        body: content?.about?.body || '',
+      },
+    })
+  }
+
+  components.push({
+    id: `c${pageId}`,
+    type: 'contact',
+    props: {
+      heading: 'Get In Touch',
+      subtitle: content?.contact?.email ? `Email: ${content.contact.email}` : 'We would love to hear from you.',
+    },
+  })
+
+  components.push({
+    id: `f${pageId}`,
+    type: 'footer',
+    props: {
+      brand: site?.title || 'My Brand',
+      copy: `© ${new Date().getFullYear()} ${site?.title || 'My Brand'}`,
+      footerLinks: [
+        { label: 'Home', href: '#home' },
+        { label: 'Contact', href: '#contact' },
+      ],
+    },
+  })
+
+  return [{ id: pageId, name: 'Home', slug: 'home', components }]
+}
+
 function EditorContent() {
   const router = useRouter()
   const { id } = useParams()
   const searchParams = useSearchParams()
   const templateId = searchParams?.get('template') || 'blank'
+  const cloneSubdomain = searchParams?.get('cloneSubdomain') || ''
   const ownerUsername = searchParams?.get('owner') || ''
   const inviteMode = searchParams?.get('mode')
   const inviteToken = searchParams?.get('token')
@@ -97,10 +165,10 @@ function EditorContent() {
 
   const canEdit = role === 'owner' || role === 'edit'
 
-  const initTemplate = useMutation(({ storage }) => {
+  const initTemplate = useMutation(({ storage }, clonePages?: Page[] | null) => {
     const existingPages = storage.get('pages') as any
     if (!existingPages || (existingPages as any[]).length === 0) {
-      const newPages = templateToPages(templateId)
+      const newPages = clonePages && clonePages.length > 0 ? clonePages : templateToPages(templateId)
       storage.set('pages', newPages)
       storage.set('activePage', newPages[0].id)
     } else {
@@ -115,9 +183,22 @@ function EditorContent() {
 
   useEffect(() => {
     if (!initialized && pages !== null) {
-      initTemplate()
+      if (cloneSubdomain) {
+        fetch(`/api/sites/public?subdomain=${encodeURIComponent(cloneSubdomain)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data?.site) {
+              initTemplate(siteContentToPages(data.site))
+            } else {
+              initTemplate(null)
+            }
+          })
+          .catch(() => initTemplate(null))
+      } else {
+        initTemplate(null)
+      }
     }
-  }, [pages, initialized, initTemplate])
+  }, [pages, initialized, initTemplate, cloneSubdomain])
 
   useEffect(() => {
     let active = true

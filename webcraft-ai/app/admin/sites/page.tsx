@@ -6,6 +6,7 @@ interface Site {
   subdomain: string
   title: string
   description: string
+  ownerUsername: string
   createdAt: string
 }
 
@@ -131,13 +132,21 @@ export default function AdminSitesPage() {
                   <p className="text-sm text-gray-400 font-mono mt-1">{site.subdomain}.rakshithganjimut.xyz</p>
                   {site.description && <p className="text-sm text-gray-500 mt-1">{site.description}</p>}
                 </div>
-                <a
-                  href={`/sites/${site.subdomain}`}
-                  target="_blank"
-                  className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-violet-600 transition-colors"
-                >
-                  View →
-                </a>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`/admin/sites/${site._id}`}
+                    className="bg-violet-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-violet-700 transition-colors"
+                  >
+                    Edit Layout
+                  </a>
+                  <a
+                    href={`/sites/${site.subdomain}`}
+                    target="_blank"
+                    className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-violet-600 transition-colors"
+                  >
+                    View →
+                  </a>
+                </div>
               </div>
             ))}
           </div>

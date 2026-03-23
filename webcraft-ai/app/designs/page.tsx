@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { TEMPLATE_PRESETS } from '@/lib/templates'
 import { showToast } from '@/lib/toast'
@@ -8,8 +8,20 @@ import { showToast } from '@/lib/toast'
 export default function DesignsPage() {
   const router = useRouter()
   const [ownerName, setOwnerName] = useState('')
+  const [communitySites, setCommunitySites] = useState<any[]>([])
 
   const templates = useMemo(() => Object.entries(TEMPLATE_PRESETS), [])
+
+  useEffect(() => {
+    fetch('/api/sites/public')
+      .then((res) => res.json())
+      .then((data) => {
+        setCommunitySites(data.sites || [])
+      })
+      .catch(() => {
+        setCommunitySites([])
+      })
+  }, [])
 
   const cloneTemplate = (templateId: string) => {
     const roomId = Math.random().toString(36).slice(2)
@@ -18,6 +30,13 @@ export default function DesignsPage() {
       params.set('owner', ownerName.trim().toLowerCase())
     }
     showToast('Cloned design. Opening collaborative editor...', 'success')
+    router.push(`/editor/${roomId}?${params.toString()}`)
+  }
+
+  const cloneCommunityDesign = (subdomain: string, owner: string) => {
+    const roomId = Math.random().toString(36).slice(2)
+    const params = new URLSearchParams({ cloneSubdomain: subdomain, owner })
+    showToast(`Cloned ${subdomain} design. Improve and re-approach @${owner}.`, 'success')
     router.push(`/editor/${roomId}?${params.toString()}`)
   }
 
@@ -74,6 +93,38 @@ export default function DesignsPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-14">
+          <h2 className="text-3xl font-black text-gray-900 mb-2">Community Uploaded Designs</h2>
+          <p className="text-gray-500 mb-6">A uploads design, B clones it, upgrades it, and presents it back to the owner.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {communitySites.map((site) => (
+              <div key={site._id} className="rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
+                <div className="h-44 bg-gradient-to-br from-slate-900 to-indigo-700 px-6 py-6 flex flex-col justify-between">
+                  <div className="text-white/80 text-xs font-bold uppercase tracking-wide">Community Design</div>
+                  <div>
+                    <h3 className="text-2xl font-black text-white">{site.title}</h3>
+                    <p className="text-white/80 text-sm">{site.description || 'Uploaded by creator'}</p>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <p className="text-xs text-gray-500 mb-3">Owner: <span className="font-bold text-violet-600">@{site.ownerUsername}</span></p>
+                  <button
+                    onClick={() => cloneCommunityDesign(site.subdomain, site.ownerUsername)}
+                    className="w-full bg-gray-900 hover:bg-violet-600 text-white font-bold py-3 rounded-xl transition-colors"
+                  >
+                    Clone + Improve + Re-approach
+                  </button>
+                </div>
+              </div>
+            ))}
+            {communitySites.length === 0 && (
+              <div className="col-span-full rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center text-gray-500">
+                No uploaded designs yet. Create one in My Sites first.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

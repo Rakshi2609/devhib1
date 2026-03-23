@@ -4,6 +4,7 @@ export interface ISite extends Document {
   subdomain: string
   title: string
   description: string
+  ownerUsername: string
   content: Record<string, any>
   createdAt: Date
   updatedAt: Date
@@ -21,6 +22,7 @@ const SiteSchema = new Schema<ISite>(
     },
     title: { type: String, required: [true, 'Title is required'] },
     description: { type: String, default: '' },
+    ownerUsername: { type: String, required: true, lowercase: true, trim: true },
     content: {
       type: Schema.Types.Mixed,
       default: {

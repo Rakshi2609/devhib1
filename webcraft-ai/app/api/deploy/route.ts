@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
           subdomain,
           title: projectName || subdomain,
           description: 'Deployed via WebCraft AI',
+          ownerUsername: 'system',
           content: { hero: { heading: `Welcome to ${subdomain}`, subheading: 'Built with WebCraft AI' } },
         })
       }

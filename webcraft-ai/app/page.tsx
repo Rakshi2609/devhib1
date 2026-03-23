@@ -25,6 +25,7 @@ export default function HomePage() {
           <div className="flex items-center gap-6">
             <a href="/admin/sites" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">My Sites</a>
             <a href="/designs" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Designs</a>
+            <a href="/inbox" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Inbox</a>
             <button
               onClick={() => openEditor('blank')}
               className="bg-gray-900 hover:bg-violet-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors"

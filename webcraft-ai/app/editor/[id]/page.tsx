@@ -15,6 +15,7 @@ import { ClientSideSuspense } from '@liveblocks/react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { TEMPLATE_PRESETS } from '@/lib/templates'
+import { showToast } from '@/lib/toast'
 
 // Convert the flat template components into a Pages array
 function templateToPages(templateId: string): Page[] {
@@ -90,7 +91,6 @@ function EditorContent() {
   const [isAuthLoading, setIsAuthLoading] = useState(true)
   const [role, setRole] = useState<'owner' | 'edit' | 'view' | 'none' | null>(null)
   const [authUser, setAuthUser] = useState<string | null>(null)
-  const [shareStatus, setShareStatus] = useState('')
 
   const pages = useStorage((root: any) => root.pages) as Page[] | null
   const activePage = useStorage((root: any) => root.activePage) as string | null
@@ -174,7 +174,7 @@ function EditorContent() {
   }, [id, inviteToken, inviteMode, isAuthLoading])
 
   const createShareLink = async (access: 'edit' | 'view', presenter?: string) => {
-    setShareStatus('Generating share link...')
+    showToast('Generating share link...', 'info')
     const res = await fetch('/api/rooms/share', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -183,17 +183,33 @@ function EditorContent() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => null)
-      setShareStatus(data?.error || 'Could not generate link')
+      showToast(data?.error || 'Could not generate link', 'error')
       return
     }
 
     const data = await res.json()
     await navigator.clipboard.writeText(data.link)
     if (presenter) {
-      setShareStatus(`Presentation link copied. Send it to @${presenter}`)
+      const notifyRes = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toUsername: presenter,
+          roomId: id,
+          link: data.link,
+          message: `${authUser || 'A collaborator'} has shared an improved design for your review.`,
+        }),
+      })
+
+      if (!notifyRes.ok) {
+        showToast(`Link copied. Could not notify @${presenter}`, 'error')
+        return
+      }
+
+      showToast(`Presented to @${presenter}. Inbox notification sent.`, 'success')
       return
     }
-    setShareStatus(`${access === 'edit' ? 'Edit' : 'View'} link copied`)
+    showToast(`${access === 'edit' ? 'Edit' : 'View'} link copied`, 'success')
   }
 
   const handleVoiceCommand = (command: any) => {
@@ -248,6 +264,11 @@ function EditorContent() {
               {role === 'owner' ? 'Owner' : role === 'edit' ? 'Editor' : 'Viewer'}
             </span>
             {authUser && <span className="text-xs text-gray-400">@{authUser}</span>}
+            {ownerUsername && (
+              <span className="text-xs text-violet-600 bg-violet-50 border border-violet-200 px-2.5 py-1 rounded-md font-semibold">
+                Owner: @{ownerUsername}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg font-medium">
@@ -299,9 +320,6 @@ function EditorContent() {
             </button>
           </div>
         </div>
-        {shareStatus && (
-          <div className="px-5 pb-2 text-xs text-violet-700 font-medium">{shareStatus}</div>
-        )}
       </header>
 
       {/* Main area */}

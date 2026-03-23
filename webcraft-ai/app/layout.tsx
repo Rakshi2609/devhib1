@@ -1,5 +1,6 @@
 import './globals.css'
 import SmoothScrolling from '@/components/ui/SmoothScrolling'
+import Toaster from '@/components/ui/Toaster'
 
 export const metadata = {
   title: 'WebCraft AI',
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <SmoothScrolling>{children}</SmoothScrolling>
+        <Toaster />
       </body>
     </html>
   )

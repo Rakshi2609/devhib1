@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { TEMPLATE_PRESETS } from '@/lib/templates'
+import { showToast } from '@/lib/toast'
 
 export default function DesignsPage() {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function DesignsPage() {
     if (ownerName.trim()) {
       params.set('owner', ownerName.trim().toLowerCase())
     }
+    showToast('Cloned design. Opening collaborative editor...', 'success')
     router.push(`/editor/${roomId}?${params.toString()}`)
   }
 
@@ -44,6 +46,11 @@ export default function DesignsPage() {
             />
             <span className="text-xs text-gray-500">Optional. Used by the editor's Present to Owner action.</span>
           </div>
+          {ownerName.trim() && (
+            <p className="mt-2 text-xs font-semibold text-violet-600">
+              Owner target: @{ownerName.trim().toLowerCase()}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

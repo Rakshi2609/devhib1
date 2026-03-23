@@ -12,7 +12,7 @@ function getIcon(slug: string) {
   return PAGE_ICONS[slug.toLowerCase()] || '📄'
 }
 
-export default function PageSwitcher() {
+export default function PageSwitcher({ readOnly = false }: { readOnly?: boolean }) {
   const pages = useStorage((root: any) => root.pages) as Page[] | null
   const activePage = useStorage((root: any) => root.activePage) as string | null
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -107,8 +107,11 @@ export default function PageSwitcher() {
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pages</span>
         <button
-          onClick={addPage}
-          className="w-6 h-6 rounded-md bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center text-lg leading-none transition-colors font-bold"
+          onClick={() => !readOnly && addPage()}
+          disabled={readOnly}
+          className={`w-6 h-6 rounded-md text-white flex items-center justify-center text-lg leading-none transition-colors font-bold ${
+            readOnly ? 'bg-gray-300 cursor-not-allowed' : 'bg-violet-600 hover:bg-violet-700'
+          }`}
           title="Add new page"
         >
           +
@@ -152,6 +155,7 @@ export default function PageSwitcher() {
               <span
                 className="flex-1 text-sm font-medium truncate"
                 onDoubleClick={e => {
+                  if (readOnly) return
                   e.stopPropagation()
                   setRenamingId(page.id)
                   setRenameValue(page.name)
@@ -163,7 +167,7 @@ export default function PageSwitcher() {
             )}
 
             {/* Delete button — shows on hover, disabled if only 1 page */}
-            {pages.length > 1 && (
+            {!readOnly && pages.length > 1 && (
               <button
                 onClick={e => { e.stopPropagation(); deletePage(page.id) }}
                 className={`opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full flex items-center justify-center text-xs transition-all hover:scale-110 flex-shrink-0 ${
@@ -183,7 +187,7 @@ export default function PageSwitcher() {
       {/* Tip */}
       <div className="px-4 py-3 border-t border-gray-100">
         <p className="text-xs text-gray-400 leading-tight">
-          💡 Double-click a page to rename it
+          {readOnly ? 'View-only mode enabled' : '💡 Double-click a page to rename it'}
         </p>
       </div>
     </div>

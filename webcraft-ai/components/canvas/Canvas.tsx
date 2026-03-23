@@ -16,7 +16,7 @@ import {
 } from '@dnd-kit/sortable'
 import Component from './Component'
 
-export default function Canvas() {
+export default function Canvas({ readOnly = false }: { readOnly?: boolean }) {
   const pages = useStorage((root: any) => root.pages) as Page[] | null
   const activePage = useStorage((root: any) => root.activePage) as string | null
 
@@ -37,6 +37,7 @@ export default function Canvas() {
   }, [])
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (readOnly) return
     const { active, over } = event
     if (!over || active.id === over.id) return
     const oldIndex = components.findIndex((c: any) => c.id === active.id)
@@ -69,12 +70,12 @@ export default function Canvas() {
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={components.map((c: any) => c.id)} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-0 bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm min-h-[300px]">
+          <div className={`flex flex-col gap-0 bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm min-h-[300px] ${readOnly ? 'pointer-events-none select-none' : ''}`}>
             {components.map((component: any) => (
               <Component
                 key={component.id}
                 {...component}
-                isPreview={false}
+                isPreview={readOnly}
               />
             ))}
 

@@ -7,10 +7,11 @@ import PageSwitcher from '@/components/canvas/PageSwitcher'
 import ColourPalette from '@/components/ui/ColourPalette'
 import DeployModal from '@/components/ui/DeployModal'
 import ExportModal from '@/components/ui/ExportModal'
+import Collaborators from '@/components/ui/Collaborators'
 import { RoomProvider, useMutation, useStorage } from '@/lib/liveblocks'
 import { Page } from '@/lib/liveblocks'
 import { ClientSideSuspense } from '@liveblocks/react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { TEMPLATE_PRESETS } from '@/lib/templates'
 
@@ -75,15 +76,24 @@ function templateToPages(templateId: string): Page[] {
 }
 
 function EditorContent() {
+  const router = useRouter()
   const { id } = useParams()
   const searchParams = useSearchParams()
   const templateId = searchParams?.get('template') || 'blank'
+  const inviteMode = searchParams?.get('mode')
+  const inviteToken = searchParams?.get('token')
   const [showDeploy, setShowDeploy] = useState(false)
   const [showExport, setShowExport] = useState(false)
   const [initialized, setInitialized] = useState(false)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
+  const [role, setRole] = useState<'owner' | 'edit' | 'view' | 'none' | null>(null)
+  const [authUser, setAuthUser] = useState<string | null>(null)
+  const [shareStatus, setShareStatus] = useState('')
 
   const pages = useStorage((root: any) => root.pages) as Page[] | null
   const activePage = useStorage((root: any) => root.activePage) as string | null
+
+  const canEdit = role === 'owner' || role === 'edit'
 
   const initTemplate = useMutation(({ storage }) => {
     const existingPages = storage.get('pages') as any
@@ -107,6 +117,79 @@ function EditorContent() {
     }
   }, [pages, initialized, initTemplate])
 
+  useEffect(() => {
+    let active = true
+
+    const checkAuth = async () => {
+      const res = await fetch('/api/auth/me')
+      if (!res.ok) {
+        const nextPath = `${window.location.pathname}${window.location.search}`
+        router.replace(`/login?next=${encodeURIComponent(nextPath)}`)
+        return
+      }
+
+      const data = await res.json()
+      if (!active) return
+
+      setAuthUser(data?.data?.username || null)
+      setIsAuthLoading(false)
+    }
+
+    checkAuth()
+    return () => {
+      active = false
+    }
+  }, [router])
+
+  useEffect(() => {
+    if (isAuthLoading) return
+
+    let active = true
+    const resolveRole = async () => {
+      if (inviteToken && (inviteMode === 'edit' || inviteMode === 'view')) {
+        await fetch('/api/rooms/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomId: id, token: inviteToken }),
+        })
+      }
+
+      const meRes = await fetch(`/api/rooms/${id}/me`)
+      if (!meRes.ok) {
+        setRole('none')
+        return
+      }
+
+      const meData = await meRes.json()
+      if (!active) return
+      setRole(meData?.role || 'none')
+    }
+
+    resolveRole()
+    return () => {
+      active = false
+    }
+  }, [id, inviteToken, inviteMode, isAuthLoading])
+
+  const createShareLink = async (access: 'edit' | 'view') => {
+    setShareStatus('Generating share link...')
+    const res = await fetch('/api/rooms/share', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId: id, access }),
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      setShareStatus(data?.error || 'Could not generate link')
+      return
+    }
+
+    const data = await res.json()
+    await navigator.clipboard.writeText(data.link)
+    setShareStatus(`${access === 'edit' ? 'Edit' : 'View'} link copied`) 
+  }
+
   const handleVoiceCommand = (command: any) => {
     console.log('Voice command received:', command)
   }
@@ -116,6 +199,24 @@ function EditorContent() {
 
   // Gather all components from all pages for export
   const allComponents = pages?.flatMap((p: Page) => p.components) ?? []
+
+  if (isAuthLoading || role === null) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
+        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-gray-500 text-sm">Preparing collaboration room...</p>
+      </div>
+    )
+  }
+
+  if (role === 'none') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-3 px-6 text-center">
+        <p className="text-xl font-bold text-gray-800">No access to this room</p>
+        <p className="text-gray-500">Ask the owner for a valid share link with edit or view access.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-100 text-gray-900">
@@ -134,11 +235,32 @@ function EditorContent() {
                 <span className="text-sm font-semibold text-violet-600">{activeP.name}</span>
               </>
             )}
+            <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-md font-semibold uppercase">
+              {role === 'owner' ? 'Owner' : role === 'edit' ? 'Editor' : 'Viewer'}
+            </span>
+            {authUser && <span className="text-xs text-gray-400">@{authUser}</span>}
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg font-medium">
               {pages?.length ?? 0} page{(pages?.length ?? 0) !== 1 ? 's' : ''}
             </span>
+            <Collaborators />
+            {role === 'owner' && (
+              <>
+                <button
+                  onClick={() => createShareLink('view')}
+                  className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
+                >
+                  🔗 Share View
+                </button>
+                <button
+                  onClick={() => createShareLink('edit')}
+                  className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
+                >
+                  ✏️ Share Edit
+                </button>
+              </>
+            )}
             <button
               onClick={() => window.open(`/preview/${id as string}`, '_blank')}
               className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
@@ -153,12 +275,16 @@ function EditorContent() {
             </button>
             <button
               onClick={() => setShowDeploy(true)}
+              disabled={!canEdit}
               className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold px-5 py-2 rounded-lg text-sm shadow-md shadow-violet-200 transition-all"
             >
               🚀 Deploy
             </button>
           </div>
         </div>
+        {shareStatus && (
+          <div className="px-5 pb-2 text-xs text-violet-700 font-medium">{shareStatus}</div>
+        )}
       </header>
 
       {/* Main area */}
@@ -167,11 +293,11 @@ function EditorContent() {
         <div className="flex flex-col w-60 flex-shrink-0 bg-white border-r border-gray-200">
           {/* Pages section (top ~40% of sidebar) */}
           <div className="flex-shrink-0 border-b border-gray-100" style={{ minHeight: '200px', maxHeight: '280px' }}>
-            <PageSwitcher />
+            <PageSwitcher readOnly={!canEdit} />
           </div>
           {/* Components section (rest of sidebar) */}
           <div className="flex-1 min-h-0">
-            <Toolbar />
+            <Toolbar readOnly={!canEdit} />
           </div>
         </div>
 
@@ -184,7 +310,7 @@ function EditorContent() {
           </div>
           {/* Canvas */}
           <div className="max-w-5xl mx-auto py-6 px-4">
-            <Canvas />
+            <Canvas readOnly={!canEdit} />
           </div>
         </main>
 
@@ -195,7 +321,7 @@ function EditorContent() {
       </div>
 
       <VoiceCommander onCommand={handleVoiceCommand} />
-      {showDeploy && <DeployModal onClose={() => setShowDeploy(false)} />}
+      {canEdit && showDeploy && <DeployModal onClose={() => setShowDeploy(false)} />}
       {showExport && <ExportModal components={allComponents} theme="midnight" onClose={() => setShowExport(false)} />}
     </div>
   )

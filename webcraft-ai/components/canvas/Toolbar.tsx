@@ -15,7 +15,7 @@ const AVAILABLE_COMPONENTS = [
   { type: 'button',       label: '🔘 Button',            desc: 'Link button with custom href' },
 ]
 
-export default function Toolbar() {
+export default function Toolbar({ readOnly = false }: { readOnly?: boolean }) {
   const pages = useStorage((root: any) => root.pages) as Page[] | null
   const activePage = useStorage((root: any) => root.activePage) as string | null
 
@@ -51,8 +51,13 @@ export default function Toolbar() {
         {AVAILABLE_COMPONENTS.map(comp => (
           <button
             key={comp.type}
-            onClick={() => addComponent(comp.type)}
-            className="group p-3 text-left border border-gray-100 rounded-xl hover:border-violet-300 hover:bg-violet-50/50 transition-all shadow-sm"
+            onClick={() => !readOnly && addComponent(comp.type)}
+            disabled={readOnly}
+            className={`group p-3 text-left border border-gray-100 rounded-xl transition-all shadow-sm ${
+              readOnly
+                ? 'opacity-50 cursor-not-allowed bg-gray-50'
+                : 'hover:border-violet-300 hover:bg-violet-50/50'
+            }`}
           >
             <div className="font-semibold text-sm text-gray-800 group-hover:text-violet-700 transition-colors">
               {comp.label}
@@ -60,6 +65,12 @@ export default function Toolbar() {
             <div className="text-xs text-gray-400 mt-0.5">{comp.desc}</div>
           </button>
         ))}
+
+        {readOnly && (
+          <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+            View-only mode: ask for an edit link to add components.
+          </div>
+        )}
       </div>
     </div>
   )

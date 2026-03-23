@@ -1,36 +1,15 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Multi-Agent AI System (Powered by Featherless AI)
 
-## Getting Started
+WebCraft AI now uses a sophisticated **5-agent orchestration pipeline** to ensure every generated site is premium and context-aware.
 
-First, run the development server:
+### The Agent Collective
+1.  **Monitor Agent**: The orchestrator. Manages the state machine and logs every step.
+2.  **Memory Agent**: Retrieves your past interactions from MongoDB to provide continuity across generations.
+3.  **Generator Agent**: The design engine. Specialized in modern, "premium navy" aesthetics using **Llama 3.3 70B**.
+4.  **Evaluator Agent**: The critic. Scores every draft on a scale of 1-10 for visual quality and technical accuracy.
+5.  **Refiner Agent**: The polisher. Re-works the layout based on the Evaluator's critique to reach a 10/10 score.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Tech Stack
+-   **Model**: `meta-llama/Llama-3.3-70B-Instruct`
+-   **Inference**: [Featherless.ai](https://featherless.ai)
+-   **Storage**: MongoDB (Conversation Memory)

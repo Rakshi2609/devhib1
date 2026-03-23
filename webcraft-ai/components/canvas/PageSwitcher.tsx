@@ -104,13 +104,13 @@ export default function PageSwitcher({ readOnly = false }: { readOnly?: boolean 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pages</span>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(30,58,95,0.5)' }}>
+        <span className="text-xs font-bold text-blue-400/60 uppercase tracking-wider">Pages</span>
         <button
           onClick={() => !readOnly && addPage()}
           disabled={readOnly}
           className={`w-6 h-6 rounded-md text-white flex items-center justify-center text-lg leading-none transition-colors font-bold ${
-            readOnly ? 'bg-gray-300 cursor-not-allowed' : 'bg-violet-600 hover:bg-violet-700'
+            readOnly ? 'bg-blue-900/30 cursor-not-allowed opacity-40' : 'bg-blue-600 hover:bg-blue-500'
           }`}
           title="Add new page"
         >
@@ -125,9 +125,10 @@ export default function PageSwitcher({ readOnly = false }: { readOnly?: boolean 
             key={page.id}
             className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-all select-none ${
               activePage === page.id
-                ? 'bg-violet-600 text-white shadow-md shadow-violet-200'
-                : 'hover:bg-gray-100 text-gray-700'
+                ? 'text-white shadow-md'
+                : 'text-blue-300/70 hover:text-blue-200'
             }`}
+            style={activePage === page.id ? { background: 'rgba(37,99,235,0.3)', boxShadow: '0 2px 8px rgba(37,99,235,0.2)', border: '1px solid rgba(59,130,246,0.4)' } : { border: '1px solid transparent' }}
             onClick={() => setActivePage(page.id)}
           >
             <span className="text-base">{getIcon(page.slug)}</span>
@@ -185,9 +186,9 @@ export default function PageSwitcher({ readOnly = false }: { readOnly?: boolean 
       </div>
 
       {/* Tip */}
-      <div className="px-4 py-3 border-t border-gray-100">
-        <p className="text-xs text-gray-400 leading-tight">
-          {readOnly ? 'View-only mode enabled' : '💡 Double-click a page to rename it'}
+      <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(30,58,95,0.5)' }}>
+        <p className="text-xs text-blue-400/40 leading-tight">
+          {readOnly ? 'View-only mode' : '💡 Double-click to rename'}
         </p>
       </div>
     </div>

@@ -305,75 +305,79 @@ function EditorContent() {
 
   if (isAuthLoading || role === null) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-4">
-        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-gray-500 text-sm">Preparing collaboration room...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: 'linear-gradient(135deg, #020817 0%, #0a1628 100%)' }}>
+        <div className="w-8 h-8 border-[3px] border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-blue-300/60 text-sm">Preparing collaboration room...</p>
       </div>
     )
   }
 
   if (role === 'none') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-3 px-6 text-center">
-        <p className="text-xl font-bold text-gray-800">No access to this room</p>
-        <p className="text-gray-500">Ask the owner for a valid share link with edit or view access.</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-6 text-center" style={{ background: 'linear-gradient(135deg, #020817 0%, #0a1628 100%)' }}>
+        <p className="text-xl font-bold text-white">No access to this room</p>
+        <p className="text-blue-300/60">Ask the owner for a valid share link with edit or view access.</p>
+        <a href="/" className="mt-4 text-sm text-blue-400 hover:text-blue-300 underline">← Back to Home</a>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-gray-100 text-gray-900">
-      {/* Fixed top bar */}
-      <header className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm z-30">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#0d1117] text-gray-900 editor-root">
+      {/* Fixed top bar — navy dark */}
+      <header className="flex-shrink-0 z-30" style={{ background: 'rgba(6,13,26,0.97)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(30,58,95,0.6)', boxShadow: '0 1px 20px rgba(0,0,0,0.5)' }}>
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-4">
-            <a href="/" className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600">
-              WebCraft AI
+            <a href="/" className="flex items-center gap-2 group">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg">
+                <span className="text-white font-black text-xs">W</span>
+              </div>
+              <span className="text-base font-black text-white tracking-tight">WebCraft<span className="text-blue-400"> AI</span></span>
             </a>
-            <a href="/designs" className="text-xs font-bold px-2 py-1 rounded-md border border-violet-200 text-violet-600 bg-violet-50">
+            <a href="/designs" className="text-xs font-bold px-2 py-1 rounded-md border border-blue-700/50 text-blue-300 bg-blue-900/30 hover:bg-blue-800/40 transition-colors">
               Designs
             </a>
-            <span className="text-gray-200">|</span>
-            <span className="text-sm text-gray-500 font-medium">{templateName} Template</span>
+            <span className="text-blue-800">|</span>
+            <span className="text-sm text-blue-400/70 font-medium">{templateName} Template</span>
             {activeP && (
               <>
-                <span className="text-gray-200">›</span>
-                <span className="text-sm font-semibold text-violet-600">{activeP.name}</span>
+                <span className="text-blue-700">›</span>
+                <span className="text-sm font-semibold text-blue-300">{activeP.name}</span>
               </>
             )}
-            <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-md font-semibold uppercase">
+            <span className="text-xs text-blue-300/70 bg-blue-900/40 border border-blue-700/40 px-2.5 py-1 rounded-md font-semibold uppercase">
               {role === 'owner' ? 'Owner' : role === 'edit' ? 'Editor' : 'Viewer'}
             </span>
-            {authUser && <span className="text-xs text-gray-400">@{authUser}</span>}
+            {authUser && <span className="text-xs text-blue-400/50 font-mono">@{authUser}</span>}
             {ownerUsername && (
-              <span className="text-xs text-violet-600 bg-violet-50 border border-violet-200 px-2.5 py-1 rounded-md font-semibold">
+              <span className="text-xs text-blue-300 bg-blue-900/30 border border-blue-700/40 px-2.5 py-1 rounded-md font-semibold">
                 Owner: @{ownerUsername}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg font-medium">
-              {pages?.length ?? 0} page{(pages?.length ?? 0) !== 1 ? 's' : ''}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-blue-400/60 bg-blue-900/30 border border-blue-800/40 px-3 py-1.5 rounded-lg font-medium">
+              {pages?.length ?? 0}p
             </span>
             <Collaborators />
             {role === 'owner' && (
               <>
                 <button
                   onClick={() => createShareLink('view')}
-                  className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
+                  className="text-sm font-medium text-blue-300/70 hover:text-blue-200 transition-colors border border-blue-800/50 hover:border-blue-600/60 px-3 py-2 rounded-lg bg-blue-900/20 hover:bg-blue-800/30"
                 >
                   🔗 Share View
                 </button>
                 <button
                   onClick={() => createShareLink('edit')}
-                  className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
+                  className="text-sm font-medium text-blue-300/70 hover:text-blue-200 transition-colors border border-blue-800/50 hover:border-blue-600/60 px-3 py-2 rounded-lg bg-blue-900/20 hover:bg-blue-800/30"
                 >
                   ✏️ Share Edit
                 </button>
                 {ownerUsername && (
                   <button
                     onClick={() => createShareLink('view', ownerUsername)}
-                    className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
+                    className="text-sm font-medium text-blue-300/70 hover:text-blue-200 transition-colors border border-blue-800/50 hover:border-blue-600/60 px-3 py-2 rounded-lg bg-blue-900/20 hover:bg-blue-800/30"
                   >
                     📣 Present to @{ownerUsername}
                   </button>
@@ -382,20 +386,20 @@ function EditorContent() {
             )}
             <button
               onClick={() => window.open(`/preview/${id as string}`, '_blank')}
-              className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
+              className="text-sm font-medium text-blue-300/70 hover:text-blue-200 transition-colors border border-blue-800/50 hover:border-blue-600/60 px-3 py-2 rounded-lg bg-blue-900/20 hover:bg-blue-800/30"
             >
               👁 Preview
             </button>
             <button
               onClick={() => setShowExport(true)}
-              className="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors border border-gray-200 hover:border-violet-300 px-4 py-2 rounded-lg"
+              className="text-sm font-medium text-blue-300/70 hover:text-blue-200 transition-colors border border-blue-800/50 hover:border-blue-600/60 px-3 py-2 rounded-lg bg-blue-900/20 hover:bg-blue-800/30"
             >
-              💻 Export Code
+              💻 Export
             </button>
             <button
               onClick={() => setShowDeploy(true)}
               disabled={!canEdit}
-              className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold px-5 py-2 rounded-lg text-sm shadow-md shadow-violet-200 transition-all"
+              className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-cyan-500 text-white font-bold px-5 py-2 rounded-lg text-sm shadow-lg shadow-blue-900/50 transition-all disabled:opacity-40"
             >
               🚀 Deploy
             </button>
@@ -405,33 +409,33 @@ function EditorContent() {
 
       {/* Main area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left panel: Pages + Components stacked */}
-        <div className="flex flex-col w-60 flex-shrink-0 bg-white border-r border-gray-200">
-          {/* Pages section (top ~40% of sidebar) */}
-          <div className="flex-shrink-0 border-b border-gray-100" style={{ minHeight: '200px', maxHeight: '280px' }}>
+        {/* Left panel: Pages + Components stacked — dark navy sidebar */}
+        <div className="flex flex-col w-60 flex-shrink-0" style={{ background: '#080f1e', borderRight: '1px solid rgba(30,58,95,0.5)' }}>
+          {/* Pages section */}
+          <div className="flex-shrink-0" style={{ borderBottom: '1px solid rgba(30,58,95,0.5)', minHeight: '200px', maxHeight: '280px' }}>
             <PageSwitcher readOnly={!canEdit} />
           </div>
-          {/* Components section (rest of sidebar) */}
+          {/* Components section */}
           <div className="flex-1 min-h-0">
             <Toolbar readOnly={!canEdit} />
           </div>
         </div>
 
-        {/* Canvas area */}
-        <main className="flex-1 relative overflow-y-auto bg-gray-100">
+        {/* Canvas area — light bg for contrast with components */}
+        <main className="flex-1 relative overflow-y-auto" style={{ background: '#111827' }}>
           {/* Hint bar */}
-          <div className="sticky top-0 z-10 bg-amber-50 border-b border-amber-100 px-6 py-2 text-xs text-amber-700 font-medium flex items-center gap-2">
+          <div className="sticky top-0 z-10 px-6 py-2 text-xs font-medium flex items-center gap-2" style={{ background: 'rgba(8,15,30,0.9)', borderBottom: '1px solid rgba(30,58,95,0.4)', backdropFilter: 'blur(8px)', color: '#60a5fa' }}>
             <span>💡</span>
             <span><strong>Click text</strong> to edit · <strong>Drag ⠿</strong> to reorder · <strong>✕</strong> to delete · Use the <strong>Pages panel</strong> to switch pages</span>
           </div>
-          {/* Canvas */}
+          {/* Canvas wrapper */}
           <div className="max-w-5xl mx-auto py-6 px-4">
             <Canvas readOnly={!canEdit} />
           </div>
         </main>
 
         {/* Right sidebar */}
-        <div className="w-56 flex-shrink-0 bg-white border-l border-gray-200 overflow-y-auto">
+        <div className="w-56 flex-shrink-0 overflow-y-auto" style={{ background: '#080f1e', borderLeft: '1px solid rgba(30,58,95,0.5)' }}>
           <ColourPalette />
         </div>
       </div>

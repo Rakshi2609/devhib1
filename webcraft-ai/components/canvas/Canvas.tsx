@@ -50,7 +50,7 @@ export default function Canvas({ readOnly = false }: { readOnly?: boolean }) {
   if (!pages) {
     return (
       <div className="flex flex-col w-full min-h-[400px] bg-gray-50 items-center justify-center rounded-2xl">
-        <div className="w-6 h-6 border-3 border-violet-500 border-t-transparent rounded-full animate-spin mb-2" />
+        <div className="w-6 h-6 border-[3px] border-violet-500 border-t-transparent rounded-full animate-spin mb-2" />
         <span className="text-gray-400 text-sm">Loading canvas...</span>
       </div>
     )

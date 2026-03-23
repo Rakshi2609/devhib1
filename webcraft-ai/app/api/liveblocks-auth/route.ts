@@ -2,14 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import EditorRoom from '@/models/EditorRoom'
 import { getLoggedInUsername } from '@/lib/auth'
+import crypto from 'crypto'
 
-// The package has dual ESM/CJS exports; require keeps this route compatible with the current TS config.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { Liveblocks } = require('@liveblocks/node')
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 })
+
+function randomToken() {
+  return crypto.randomBytes(16).toString('hex')
+}
 
 export async function POST(req: NextRequest) {
   const username = getLoggedInUsername()
@@ -26,10 +30,20 @@ export async function POST(req: NextRequest) {
 
   try {
     await dbConnect()
-    const room = await EditorRoom.findOne({ roomId } as any)
+    let room = await EditorRoom.findOne({ roomId } as any)
 
     if (!room) {
-      return NextResponse.json({ error: 'Room not found' }, { status: 404 })
+      // Auto-create the room with this user as owner
+      // This handles the race-condition where liveblocks-auth fires before /api/rooms/[id]/me
+      room = await EditorRoom.create({
+        roomId,
+        ownerUsername: username,
+        collaborators: [],
+        shareTokens: {
+          edit: randomToken(),
+          view: randomToken(),
+        },
+      })
     }
 
     let accessType: 'read' | 'write' = 'read'

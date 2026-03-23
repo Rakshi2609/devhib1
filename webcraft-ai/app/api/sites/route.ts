@@ -6,7 +6,7 @@ import Site from '@/models/Site'
 export async function GET() {
   try {
     await dbConnect()
-    const sites = await Site.find({}).sort({ createdAt: -1 }).lean()
+    const sites = await Site.find({} as any).sort({ createdAt: -1 }).lean()
     return NextResponse.json({ sites })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check uniqueness
-    const existing = await Site.findOne({ subdomain: subdomain.toLowerCase() })
+    const existing = await Site.findOne({ subdomain: subdomain.toLowerCase() } as any)
     if (existing) {
       return NextResponse.json({ error: 'This subdomain is already taken' }, { status: 409 })
     }

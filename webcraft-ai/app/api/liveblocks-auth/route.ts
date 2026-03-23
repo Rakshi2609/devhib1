@@ -32,16 +32,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 })
     }
 
-    let access: 'room:read' | 'room:write' = 'room:read'
+    let accessType: 'read' | 'write' = 'read'
 
     if (room.ownerUsername === username) {
-      access = 'room:write'
+      accessType = 'write'
     } else {
       const collaborator = room.collaborators.find((c: any) => c.username === username)
       if (collaborator?.role === 'edit') {
-        access = 'room:write'
+        accessType = 'write'
       } else if (collaborator?.role === 'view') {
-        access = 'room:read'
+        accessType = 'read'
       } else {
         return NextResponse.json({ error: 'No access to this room' }, { status: 403 })
       }
@@ -50,7 +50,11 @@ export async function POST(req: NextRequest) {
     const session = liveblocks.prepareSession(username, {
       userInfo: { name: username },
     })
-    session.allow(roomId, access)
+    if (accessType === 'write') {
+      session.allow(roomId, session.FULL_ACCESS)
+    } else {
+      session.allow(roomId, session.READ_ACCESS)
+    }
 
     const { body: authBody, status } = await session.authorize()
     return new Response(authBody, { status })

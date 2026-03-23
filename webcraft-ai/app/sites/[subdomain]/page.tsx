@@ -57,7 +57,7 @@ export default async function SitePage({ params }: { params: { subdomain: string
   let site = null
   try {
     await dbConnect()
-    site = await Site.findOne({ subdomain }).lean()
+    site = await Site.findOne({ subdomain } as any).lean()
   } catch (e) {
     console.error('DB Error:', e)
   }
@@ -92,7 +92,7 @@ export default async function SitePage({ params }: { params: { subdomain: string
 export async function generateMetadata({ params }: { params: { subdomain: string } }) {
   try {
     await dbConnect()
-    const site = await Site.findOne({ subdomain: params.subdomain }).lean() as any
+    const site = await Site.findOne({ subdomain: params.subdomain } as any).lean() as any
     if (!site) return { title: 'Not Found' }
     return {
       title: site.title,

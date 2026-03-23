@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     // Optionally: register in DB as well
     if (subdomain) {
       await dbConnect()
-      const exists = await Site.findOne({ subdomain })
+      const exists = await Site.findOne({ subdomain } as any)
       if (!exists) {
         await Site.create({
           subdomain,

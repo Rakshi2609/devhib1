@@ -1,28 +1,34 @@
 // components/auth/Login.tsx
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function Login() {
   const [username, setUsername] = useState('');
+  const [error, setError] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    const nextPath = searchParams.get('next') || '/';
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ username: username.trim() }),
     });
 
     if (res.ok) {
-      // For Liveblocks, you'd typically get a token and use that.
-      // For simplicity, we'll just store the username and redirect.
-      localStorage.setItem('username', username);
-      router.push(`/editor/${username}`); // Redirect to a user-specific editor
+      router.push(nextPath);
+      return;
     }
+
+    const data = await res.json().catch(() => null);
+    setError(data?.error || 'Unable to login');
   };
 
   return (
@@ -39,6 +45,7 @@ export default function Login() {
         <button type="submit" className="w-full bg-violet-600 text-white p-2 rounded">
           Enter Editor
         </button>
+        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
       </form>
     </div>
   );

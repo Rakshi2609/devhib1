@@ -37,8 +37,8 @@ Follow these steps to get WebCraft AI running on your local machine:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/Rakshi2609/devhib1.git
-cd devhib1
+git clone https://github.com/Rakshi2609/web-craft.git
+cd web-craft
 ```
 
 ### 2. Install Dependencies

@@ -1,4 +1,5 @@
 import { AgentResponse } from '../types/agents'
+import { callLLM } from '../llm'
 
 export class BaseAgent {
   protected model: string = 'meta-llama/Llama-3.3-70B-Instruct'
@@ -10,32 +11,11 @@ export class BaseAgent {
 
   protected async ask(systemPrompt: string, userPrompt: string, json: boolean = true): Promise<AgentResponse> {
     try {
-      const res = await fetch('https://api.featherless.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: this.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          response_format: json ? { type: 'json_object' } : undefined,
-          temperature: 0.7,
-          max_tokens: 2000
-        })
-      })
+      const content = await callLLM([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ], { model: this.model, max_tokens: 2000 })
 
-      if (!res.ok) {
-        throw new Error(`Featherless API error: ${res.statusText}`)
-      }
-
-      const data = await res.json()
-      const content = data.choices[0].message.content
-      
-      // Handle potential prefix/suffix text if not forced JSON by API
       let parsed = content
       if (json) {
         try {

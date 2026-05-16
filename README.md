@@ -38,7 +38,7 @@ Follow these steps to get WebCraft AI running on your local machine:
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/Rakshi2609/devhib1.git
-cd devhib1/webcraft-ai
+cd devhib1
 ```
 
 ### 2. Install Dependencies
@@ -47,14 +47,12 @@ npm install
 ```
 
 ### 3. Configure Environment Variables
-Create a `.env` file in the `webcraft-ai` directory and add the following:
+Create a `.env` file in the root directory and add the following:
 
 ```env
 # AI Providers
 FEATHERLESS_API_KEY=your_featherless_key
-GEMINI_API_KEY=your_google_gemini_key # Fallback key for Google Gemini
-OLLAMA_HOST=http://localhost:11434 # Optional: Default for Ollama
-OLLAMA_MODEL=llama3.2 # Optional: Model for Ollama fallback
+GEMINI_API_KEY=your_google_gemini_key # Required for fallback
 
 # Collaboration
 LIVEBLOCKS_SECRET_KEY=your_liveblocks_key

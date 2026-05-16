@@ -1,8 +1,0 @@
-# Nested Next.js build output
-/.next
-
-# Environment files
-.env
-.env.local
-.env.*
-.env.example

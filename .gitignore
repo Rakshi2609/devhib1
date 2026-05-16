@@ -1,15 +1,19 @@
 # Dependencies
 /node_modules
 
-# Environment variables
+# Next.js build output
+/.next
+/out
+
+# Local env files
 .env
 .env.local
 .env.*
 .env.example
+.env*.local
 
-# Build output
-.next/
-out/
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
-
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
